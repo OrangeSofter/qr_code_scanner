@@ -64,12 +64,13 @@ class _QRViewState extends State<QRView> {
   @override
   void initState() {
     super.initState();
-    _observer = LifecycleEventHandler(resumeCallBack: updateDimensions);
-    WidgetsBinding.instance!.addObserver(_observer);
+    // _observer = LifecycleEventHandler(resumeCallBack: updateDimensions);
+    // WidgetsBinding.instance!.addObserver(_observer);
   }
 
   @override
   Widget build(BuildContext context) {
+    updateDimensions();
     return NotificationListener(
       onNotification: onNotification,
       child: SizeChangedLayoutNotifier(
@@ -322,7 +323,8 @@ class QRViewController {
     _scanUpdateController.close();
   }
 
-  /// Updates the view dimensions for iOS.
+
+  /// Updates the view dimensions
   static Future<bool> updateDimensions(GlobalKey key, MethodChannel channel,
       {QrScannerOverlayShape? overlay}) async {
     if (defaultTargetPlatform == TargetPlatform.iOS) {
