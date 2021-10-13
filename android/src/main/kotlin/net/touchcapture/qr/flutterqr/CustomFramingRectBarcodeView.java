@@ -4,6 +4,7 @@ import android.content.Context;
 import android.graphics.Rect;
 import android.util.AttributeSet;
 
+import com.journeyapps.barcodescanner.BarcodeCallback;
 import com.journeyapps.barcodescanner.BarcodeView;
 import com.journeyapps.barcodescanner.Size;
 
@@ -12,6 +13,10 @@ public class CustomFramingRectBarcodeView extends BarcodeView {
     private static final int BOTTOM_OFFSET_NOT_SET_VALUE = -1;
 
     private int bottomOffset = BOTTOM_OFFSET_NOT_SET_VALUE;
+
+    private BarcodeCallback barcodeCallback = null;
+    private Rect container = null;
+    private Rect surfaceRect = null;
 
     public CustomFramingRectBarcodeView(Context context) {
         super(context);
@@ -27,6 +32,8 @@ public class CustomFramingRectBarcodeView extends BarcodeView {
 
     @Override
     protected Rect calculateFramingRect(Rect container, Rect surface) {
+        this.container = container;
+        this.surfaceRect = surface;
         Rect containerArea = new Rect(container);
         boolean intersects = containerArea.intersect(surface);//adjusts the containerArea (code from super.calculateFramingRect)
         Rect scanAreaRect = super.calculateFramingRect(container, surface);
@@ -43,8 +50,45 @@ public class CustomFramingRectBarcodeView extends BarcodeView {
         return scanAreaRect;
     }
 
+    @Override
+    public void decodeContinuous(BarcodeCallback callback) {
+        barcodeCallback = callback;
+        super.decodeContinuous(callback);
+    }
+
+    @Override
+    public Rect getPreviewFramingRect(){
+        if(container != null && surfaceRect != null){
+            return calculateFramingRect(container, surfaceRect);
+        }
+        return  super.getPreviewFramingRect();
+//        final Size previewSize = getPreviewSize();
+//
+//        int previewWidth = previewSize.width;
+//        int previewHeight = previewSize.height;
+//
+////        int width = containerSize.width;
+////        int height = containerSize.height;
+////        Rect container = new Rect(0, 0, width, height);
+//
+//        final Rect framingRect = getFramingRect();
+//        if(framingRect == null || surfaceRect == null) return super.getPreviewFramingRect();
+//
+//        Rect frameInPreview = new Rect(framingRect);
+//        frameInPreview.offset(-surfaceRect.left, -surfaceRect.top);
+//
+//        return new Rect(frameInPreview.left * previewWidth / surfaceRect.width(),
+//                frameInPreview.top * previewHeight / surfaceRect.height(),
+//                frameInPreview.right * previewWidth / surfaceRect.width(),
+//                frameInPreview.bottom * previewHeight / surfaceRect.height());
+    }
+
     public void setFramingRect(int rectWidth, int rectHeight, int bottomOffset) {
         this.bottomOffset = bottomOffset;
         this.setFramingRectSize(new Size(rectWidth, rectHeight));
+        if(barcodeCallback != null){
+            super.decodeContinuous(barcodeCallback);
+        }
+
     }
 }

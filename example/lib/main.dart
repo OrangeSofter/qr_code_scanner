@@ -158,12 +158,12 @@ class _QRViewExampleState extends State<QRViewExample> {
       key: qrKey,
       onQRViewCreated: _onQRViewCreated,
       overlay: QrScannerOverlayShape(
-          borderColor: Colors.red,
-          borderRadius: 10,
-          borderLength: 30,
-          borderWidth: 10,
-          cutOutWidth: _isBigArea ? 400 : 200,
-      cutOutHeight: _isBigArea ? 250 : 100,
+        borderColor: Colors.red,
+        borderRadius: 10,
+        borderLength: 30,
+        borderWidth: 10,
+        cutOutWidth: _isBigArea ? 400 : 200,
+        cutOutHeight: _isBigArea ? 450 : 100,
       ),
       onPermissionSet: (ctrl, p) => _onPermissionSet(context, ctrl, p),
     );
