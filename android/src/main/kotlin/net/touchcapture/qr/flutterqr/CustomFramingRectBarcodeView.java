@@ -7,6 +7,10 @@ import android.util.AttributeSet;
 import com.journeyapps.barcodescanner.BarcodeCallback;
 import com.journeyapps.barcodescanner.BarcodeView;
 import com.journeyapps.barcodescanner.Size;
+import com.journeyapps.barcodescanner.camera.DisplayConfiguration;
+
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 
 public class CustomFramingRectBarcodeView extends BarcodeView {
 
@@ -15,8 +19,6 @@ public class CustomFramingRectBarcodeView extends BarcodeView {
     private int bottomOffset = BOTTOM_OFFSET_NOT_SET_VALUE;
 
     private BarcodeCallback barcodeCallback = null;
-    private Rect container = null;
-    private Rect surfaceRect = null;
 
     public CustomFramingRectBarcodeView(Context context) {
         super(context);
@@ -32,8 +34,6 @@ public class CustomFramingRectBarcodeView extends BarcodeView {
 
     @Override
     protected Rect calculateFramingRect(Rect container, Rect surface) {
-        this.container = container;
-        this.surfaceRect = surface;
         Rect containerArea = new Rect(container);
         boolean intersects = containerArea.intersect(surface);//adjusts the containerArea (code from super.calculateFramingRect)
         Rect scanAreaRect = super.calculateFramingRect(container, surface);
@@ -58,29 +58,57 @@ public class CustomFramingRectBarcodeView extends BarcodeView {
 
     @Override
     public Rect getPreviewFramingRect(){
-        if(container != null && surfaceRect != null){
-            return calculateFramingRect(container, surfaceRect);
+        Size containerSize = null;
+        Size previewSize = null;
+        DisplayConfiguration displayConfiguration = null;
+        try{
+           final Class cameraPreviewClass =  this.getClass().getSuperclass().getSuperclass();
+           final Field containerSizeField = cameraPreviewClass.getDeclaredField("containerSize");
+           final Field previewSizeField = cameraPreviewClass.getDeclaredField("previewSize");
+           final Field displayConfigurationField = cameraPreviewClass.getDeclaredField("displayConfiguration");
+
+           containerSizeField.setAccessible(true);
+           previewSizeField.setAccessible(true);
+           displayConfigurationField.setAccessible(true);
+
+            containerSize = (Size) containerSizeField.get(this);
+            previewSize = (Size) previewSizeField.get(this);
+            displayConfiguration = (DisplayConfiguration) displayConfigurationField.get(this);
+        } catch (Exception e){
+            final String d = "";
         }
-        return  super.getPreviewFramingRect();
-//        final Size previewSize = getPreviewSize();
-//
-//        int previewWidth = previewSize.width;
-//        int previewHeight = previewSize.height;
-//
-////        int width = containerSize.width;
-////        int height = containerSize.height;
-////        Rect container = new Rect(0, 0, width, height);
-//
-//        final Rect framingRect = getFramingRect();
-//        if(framingRect == null || surfaceRect == null) return super.getPreviewFramingRect();
-//
-//        Rect frameInPreview = new Rect(framingRect);
-//        frameInPreview.offset(-surfaceRect.left, -surfaceRect.top);
-//
-//        return new Rect(frameInPreview.left * previewWidth / surfaceRect.width(),
-//                frameInPreview.top * previewHeight / surfaceRect.height(),
-//                frameInPreview.right * previewWidth / surfaceRect.width(),
-//                frameInPreview.bottom * previewHeight / surfaceRect.height());
+
+
+        if (containerSize == null || previewSize == null || displayConfiguration == null) {
+
+            throw new IllegalStateException("containerSize or previewSize is not set yet");
+            //return super.getPreviewFramingRect();
+        }
+
+        int previewWidth = previewSize.width;
+        int previewHeight = previewSize.height;
+
+        int width = containerSize.width;
+        int height = containerSize.height;
+
+        Rect scaledPreview = displayConfiguration.scalePreview(previewSize);
+        if (scaledPreview.width() <= 0 || scaledPreview.height() <= 0) {
+            // Something is not ready yet - we can't start the preview.
+            throw new IllegalStateException("Something is not ready yet - we can't start the preview.");
+        }
+
+        final Rect surfaceRect = scaledPreview;
+
+        final Rect container = new Rect(0, 0, width, height);
+        final Rect framingRect = calculateFramingRect(container, surfaceRect);
+        final Rect frameInPreview = new Rect(framingRect);
+        frameInPreview.offset(-surfaceRect.left, -surfaceRect.top);
+
+        return new Rect(frameInPreview.left * previewWidth / surfaceRect.width(),
+                frameInPreview.top * previewHeight / surfaceRect.height(),
+                frameInPreview.right * previewWidth / surfaceRect.width(),
+                frameInPreview.bottom * previewHeight / surfaceRect.height());
+
     }
 
     public void setFramingRect(int rectWidth, int rectHeight, int bottomOffset) {
@@ -91,4 +119,15 @@ public class CustomFramingRectBarcodeView extends BarcodeView {
         }
 
     }
+
+//    private void calculateFrames(){
+//        try {
+//            Method method = this.getClass().getDeclaredMethod("calculateFrames");
+//            method.setAccessible(true);
+//            method.invoke(this);
+//        } catch (Exception e){
+//
+//        }
+//
+//    }
 }
