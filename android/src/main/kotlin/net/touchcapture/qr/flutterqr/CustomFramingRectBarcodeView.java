@@ -11,6 +11,7 @@ import com.journeyapps.barcodescanner.camera.DisplayConfiguration;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.util.concurrent.TimeUnit;
 
 public class CustomFramingRectBarcodeView extends BarcodeView {
 
@@ -112,11 +113,24 @@ public class CustomFramingRectBarcodeView extends BarcodeView {
     }
 
     public void setFramingRect(int rectWidth, int rectHeight, int bottomOffset) {
+        final Size newSize = new Size(rectWidth, rectHeight);
+        if(bottomOffset == this.bottomOffset && newSize.equals(this.getFramingRectSize())) return;
         this.bottomOffset = bottomOffset;
-        this.setFramingRectSize(new Size(rectWidth, rectHeight));
+        this.setFramingRectSize(newSize);
         if(barcodeCallback != null){
-            super.decodeContinuous(barcodeCallback);
+            synchronized (this){
+                super.stopDecoding();
+
+                try{
+                    Thread.sleep(100);
+                } catch (Exception e){}
+
+
+                super.decodeContinuous(barcodeCallback);
+            }
         }
+//        this.pause();
+//        this.resume();
 
     }
 

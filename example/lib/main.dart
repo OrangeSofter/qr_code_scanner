@@ -37,7 +37,7 @@ class _QRViewExampleState extends State<QRViewExample> {
   Barcode? result;
   QRViewController? controller;
   final GlobalKey qrKey = GlobalKey(debugLabel: 'QR');
-  bool _isBigArea = false;
+  bool _isBigArea = true;
 
   // In order to get hot reload to work we need to pause the camera if the platform
   // is android, or resume the camera if the platform is iOS.
@@ -162,8 +162,9 @@ class _QRViewExampleState extends State<QRViewExample> {
         borderRadius: 10,
         borderLength: 30,
         borderWidth: 10,
-        cutOutWidth: _isBigArea ? 400 : 200,
-        cutOutHeight: _isBigArea ? 450 : 100,
+        cutOutWidth: _isBigArea ? 250 : 200,
+        cutOutHeight: _isBigArea ? 150 : 100,
+        cutOutBottomOffset: _isBigArea ? 0 : 200,
       ),
       onPermissionSet: (ctrl, p) => _onPermissionSet(context, ctrl, p),
     );
